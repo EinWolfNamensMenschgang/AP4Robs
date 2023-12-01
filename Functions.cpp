@@ -22,6 +22,11 @@ struct Odometry_msg {
    double ranges[360];
 };
 
+struct Twist_msg {
+    Position linear;
+    Position angular;
+};
+
 double getYawFromQuats (Quaternion quats){ //assumes normalized Quaternions
     double siny_cosp = 2* (quats.w*quats.z+quats.x*quats.y);
     double cosy_cosp = 1 - 2 * (quats.y * quats.y + quats.z * quats.z);
@@ -49,4 +54,5 @@ bool turnedToAngle(Odometry_msg& msg, double angleToTurnTo){
         return false;
     }
 };
+
 
