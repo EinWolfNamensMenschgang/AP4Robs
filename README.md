@@ -10,3 +10,7 @@ https://lucid.app/lucidchart/83606a56-d042-4ece-9cc7-f783b8765efa/edit?viewport_
 # shm-sem-prod-cons
 
 A process gets forked and uses shared memories and semaphores to send a struct consisting of position, orientation and ranges to the child process
+
+# Functions.cpp
+
+Helper functions to be used further along the project 
