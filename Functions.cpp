@@ -1,5 +1,8 @@
 //Functions for AP4Robos
 #define _USE_MATH_DEFINES
+#define GENERAL_VELOCITY 1.0
+#define CRITICAL_DISTANCE 0.1
+#define K_ALPHA 0.1
 #include <cmath>
 
 
@@ -35,11 +38,11 @@ double getYawFromQuats (Quaternion quats){ //assumes normalized Quaternions
     return yaw;
 };
 
-bool wallReached (Odometry_msg& msg, double criticalDistance){ //assumes laserscan data is clockwise, yaw counterclockwise, robot starts facing the obstacle
+bool wallReached (Odometry_msg& msg){ //assumes laserscan data is clockwise, yaw counterclockwise, robot starts facing the obstacle
     double yawAngle = getYawFromQuats(msg.orientation);
     int yawAngleRounded = std::round(yawAngle);
     double laserRangeInFront = msg.ranges[360-yawAngleRounded];
-    if (laserRangeInFront <= criticalDistance){
+    if (laserRangeInFront <= CRITICAL_DISTANCE){
         return true;
     } else {
         return false;
@@ -55,4 +58,34 @@ bool turnedToAngle(Odometry_msg& msg, double angleToTurnTo){
     }
 };
 
+void publish(Twist_msg msg, int ipAdress){
+    /*TCP IP shenanigans*/
+};
+
+Twist_msg linearControllerStraight(Odometry_msg& msg){
+    Twist_msg output;
+    output.linear.x = GENERAL_VELOCITY;
+    output.linear.y = 0.0;
+    output.linear.z = 0.0;
+    double yaw = getYawFromQuats(msg.orientation);
+    double angular_vel = -yaw * K_ALPHA;
+    output.angular.x = 0.0;
+    output.angular.y = 0.0;
+    output.angular.z = angular_vel;
+    return output;
+};
+
+
+Twist_msg linearControllerCylinder(Odometry_msg& msg){
+    Twist_msg output;
+    output.linear.x = GENERAL_VELOCITY;
+    output.linear.y = 0.0;
+    output.linear.z = 0.0;
+    double yaw = getYawFromQuats(msg.orientation);
+    double angular_vel = -yaw * K_ALPHA;
+    output.angular.x = 0.0;
+    output.angular.y = 0.0;
+    output.angular.z = angular_vel;
+    return output;
+};
 
