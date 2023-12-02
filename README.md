@@ -16,4 +16,4 @@ A process gets forked and uses shared memories and semaphores to send a struct c
 Helper functions to be used further along the project 
 
 # Subscriber.cpp
-Function that takes Server Port (9997 or 9998) and expected number of Chars per Message (/scan ~9000, /odom ?) as arguments and returns the received message as std::vector<char>
+Function that takes Server Port (9997 or 9998) and expected number of Chars per Message (/scan ~9000, /odom ?) as arguments and returns the received message as char std::vector
