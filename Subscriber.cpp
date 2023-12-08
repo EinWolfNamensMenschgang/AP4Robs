@@ -8,16 +8,20 @@
 #include <stdlib.h> /* for exit() */
 #include <vector>
 #include <iostream>
-#define RCVBUFSIZE 9000   /* Size of receive buffer */
-#define SERVERPORT 9998 //9997 for /scan, 9998 for /odom
+#include "Subscriber.h"
+#include "messages.h"
+#define SCAN_RCVBUFSIZE 9000   /* Size of receive buffer */
+#define ODOM_PORT 9998 //9997 for /scan, 9998 for /odom
+#define SCAN_PORT 9997
+
 void DieWithError(const char *errorMessage)
 {
     perror(errorMessage);
     exit(1);
 }
 
-
-std::vector<char> subscribe(int port, int messageSize){ //SERVERPORT, message size is expected number of chars in one Message
+namespace Subscriber{
+void subscribe(int port, int messageSize, std::vector<char>& returnString){ //SERVERPORT, message size is expected number of chars in one Message
 int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort;     /* Echo server port */
@@ -79,10 +83,11 @@ int sock;                        /* Socket descriptor */
     printf("\n");    /* Print a final linefeed */
 
     close(sock);
-    return finalMessage;
+    returnString = finalMessage;
+    return;
 }
-
-int main(){
+}
+/*int main(){
     std::vector<char> final_msg = subscribe(SERVERPORT, RCVBUFSIZE);
     return 0;
-}
+}*/

@@ -4,44 +4,31 @@
 #define CRITICAL_DISTANCE 0.1
 #define K_ALPHA 0.1
 #include <cmath>
+#include "messages.h"
 
-
-struct Position{
-   double x;
-   double y;
-   double z;
-};
-
-struct Quaternion{
-   double x;
-   double y;
-   double z;
-   double w;
-};
-
-struct Odometry_msg {
-   Position position;
-   Quaternion orientation;
-   double ranges[360];
-};
-
-struct Twist_msg {
-    Position linear;
-    Position angular;
-};
-
-double getYawFromQuats (Quaternion quats){ //assumes normalized Quaternions
+namespace Functions{
+double getYawFromQuats (Messages::Quaternion quats){ //assumes normalized Quaternions
     double siny_cosp = 2* (quats.w*quats.z+quats.x*quats.y);
     double cosy_cosp = 1 - 2 * (quats.y * quats.y + quats.z * quats.z);
     double yaw = std::atan2(siny_cosp, cosy_cosp);
     //int yaw_rounded = std::round(yaw);
-    return yaw;
+    double theta = yaw;
+    if(theta>M_PI)
+        theta = theta -(2*M_PI);
+    if(theta<-M_PI)
+        theta = theta + (2*M_PI);
+    return theta;
 };
 
-bool wallReached (Odometry_msg& msg){ //assumes laserscan data is clockwise, yaw counterclockwise, robot starts facing the obstacle
-    double yawAngle = getYawFromQuats(msg.orientation);
-    int yawAngleRounded = std::round(yawAngle);
-    double laserRangeInFront = msg.ranges[360-yawAngleRounded];
+double rad2deg(double angleInRad){
+double angleInDegree = angleInRad *180/M_PI;
+return angleInDegree;
+};
+
+bool wallReached (Messages::Sensor_msg& msg){ //assumes laserscan data is clockwise, yaw counterclockwise, robot starts facing the obstacle
+    double yawAngle = getYawFromQuats(msg.odom.orientation);
+    int yawAngleRounded = std::round(rad2deg(yawAngle));
+    double laserRangeInFront = msg.laser.ranges[360-yawAngleRounded];
     if (laserRangeInFront <= CRITICAL_DISTANCE){
         return true;
     } else {
@@ -49,7 +36,7 @@ bool wallReached (Odometry_msg& msg){ //assumes laserscan data is clockwise, yaw
     }
 };
 
-bool turnedToAngle(Odometry_msg& msg, double angleToTurnTo){
+bool turnedToAngle(Messages::Odometry_msg& msg, double angleToTurnTo){
     double yaw = getYawFromQuats(msg.orientation);
     if (yaw - angleToTurnTo <=0.1){
         return true;
@@ -58,11 +45,38 @@ bool turnedToAngle(Odometry_msg& msg, double angleToTurnTo){
     }
 };
 
-void publish(Twist_msg msg, int ipAdress){
-    /*TCP IP shenanigans*/
-};
+Messages::Twist_msg_and_distance linearController(double k_alpha,double k_beta, double k_rho, double goal_x, double goal_y, double goal_theta, double currentX, double currentY, double currentYaw){ 
 
-Twist_msg linearControllerStraight(Odometry_msg& msg){
+    //goal_theta = goal_theta*M_PI/180.0;
+    double delta_x, delta_y, delta_theta;
+    delta_x = goal_x-currentX;
+    delta_y = goal_y-currentY;
+    delta_theta = goal_theta - currentYaw;
+
+    double rho, alpha, beta;
+    rho = sqrt((delta_x*delta_x)+(delta_y*delta_y));
+    alpha = -currentYaw +atan2(delta_y, delta_x);
+    if(alpha>M_PI)
+        alpha = alpha-(2*M_PI);
+    if(alpha<-M_PI)
+        alpha = alpha + (2*M_PI);
+    beta = -goal_theta - alpha;
+    if(beta>M_PI)
+        beta = beta - (2*M_PI);
+    if(beta<-M_PI)
+        beta = beta + (2*M_PI);
+    double v, omega;
+    v = k_rho*rho;
+    omega = k_alpha*alpha + k_beta*beta;
+
+    Messages::Twist_msg_and_distance msg;
+    msg.twist.x_vel = v;
+    msg.twist.angular_vel = omega;
+    msg.distance = rho;
+    return msg;
+}
+}
+/*Twist_msg linearControllerStraight(Odometry_msg& msg){
     Twist_msg output;
     output.linear.x = GENERAL_VELOCITY;
     output.linear.y = 0.0;
@@ -87,5 +101,5 @@ Twist_msg linearControllerCylinder(Odometry_msg& msg){
     output.angular.y = 0.0;
     output.angular.z = angular_vel;
     return output;
-};
+};*/
 

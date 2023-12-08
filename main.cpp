@@ -179,6 +179,7 @@ int main()
 
 //------------------TODO: Insert Waypoint Array Creation ---------------------------
 int numberOfWaypoints;
+int waypointIndex = 0;
 Messages::Odometry_msg waypoints[numberOfWaypoints];
 //----------------------------------------------------------------------------------
 
@@ -189,7 +190,7 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
       exit(-1);
    }
 
-   if (child_pid == 0) // child process - the consumer
+   if (child_pid == 0) // child process - the consumer TWIST_MSG PUBLISHER
    { 
       signal (SIGINT, consumerHandler);  // catch SIGINT
       std::cout << "I am the consumer\n";
@@ -227,16 +228,35 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
       double laserY;
       double laserYAW;
 //------------------------------------------------------------------------------
-      double trustOdom = 0.9;
-      double trustLaser = 0.1; //trustOdom + trustLaser = 1;
+      double trustOdom = 1.0; //For Testing
+      double trustLaser = 0.0; //trustOdom + trustLaser = 1;
       double assumedX = trustOdom*nextConsumed.odom.position.x + trustLaser*laserX;
       double assumedY = trustOdom*nextConsumed.odom.position.y + trustLaser*laserY;
       double odomYAW = Functions::getYawFromQuats(nextConsumed.odom.orientation);
       double assumedYAW = trustOdom*odomYAW + trustLaser*laserYAW; //Or just use odomYAW if calculating laserYAW is too difficult
 
-      
+      Messages::Twist_msg_and_distance lc_msg;
+      Messages::Odometry_msg goal = waypoints[waypointIndex];
+      double goalYaw = Functions::getYawFromQuats(goal.orientation);
+      double k_alpha = 0.6;
+      double k_rho = 0.2;
+      double k_beta = -0.2;
+
+      lc_msg = Functions::linearController(k_alpha, k_beta, k_rho, goal.position.x, goal.position.y, goalYaw, assumedX, assumedY, assumedYAW);    
+
+//--------------------TODO: Convert Twist Message to std::string ------------------------------------------------
+Messages::Twist_msg cmd_vel = lc_msg.twist;
+std::string twist_string;
+//---------------------------------------------------------------------------------------------------------------
 
 
+if(lc_msg.distance < 0.05){
+   waypointIndex++;
+}else if(waypointIndex == numberOfWaypoints){
+// Publish 0 Velocity
+}else{
+Publisher::publish(twist_string);
+}
 
       }  // end consuming loop
    }  // end consumer code
@@ -253,7 +273,6 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
       shmptr->in = 0;
       shmptr->out = 0;
       shmptr->numItems = 0;
-      //std::cout << "Producer: shared memory initialized\n";
       signalSem(init);
       
       // producing loop
@@ -265,8 +284,9 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
         std::thread LaserSub(Subscriber::subscribe, ODOM_PORT, ODOM_RCVBUFSIZE, std::ref(laser_msg));
         OdomSub.join(); //wait for OdomSub to finish
         LaserSub.join(); //wait for LaserSub to finish
-      //---------insert Odometry_msg parse(odom_msg)------------
-      //---------insert Laserscan_msg parse(laser_msg)----------
+
+      //---------TODO: Insert Odometry_msg parse(odom_msg)-----------------
+      //---------TODO: Insert Laserscan_msg parse(laser_msg)---------------
 
          Messages::Sensor_msg msg;
          waitSem(empty);
@@ -278,7 +298,7 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
          signalSem(mutex);
          signalSem(full);
          std::cout << "Producer wrote: x:" << msg.odom.position.x << " y: "<< msg.odom.position.y << " range: " << msg.laser.ranges[0] << std::endl;
-         sleep(1); 
+         sleep(0.1); 
       }  // end producing loop
    }  // end producer code
 }  // end main

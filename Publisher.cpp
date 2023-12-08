@@ -9,28 +9,19 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include "Publisher.h"
 
 #define RCVBUFSIZE 9000   /* Size of receive buffer */
 #define SERVERPORT 9999 //9999 for /cmd_vel
+
 void DieWithError(const char *errorMessage)
 {
     perror(errorMessage);
     exit(1);
 }
 
-struct Position{
-   double x;
-   double y;
-   double z;
-};
-
-struct Twist_msg {
-    Position linear;
-    Position angular;
-};
-
 std::string testString = "---START---{\"linear\": 0.0, \"angular\": 0.0}___END___";
-
+namespace Publisher{
 void publish(std::string twist_msg){ 
 int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
@@ -69,8 +60,9 @@ int sock;                        /* Socket descriptor */
         DieWithError("send() sent a different number of bytes than expected");
     close(sock);
 }
+}
 
-int main(){
+/*int main(){
     publish(testString);
     return 0;
-}
+}*/
