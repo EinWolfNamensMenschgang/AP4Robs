@@ -4,37 +4,14 @@
 #include <vector>
 #include <sstream>
 #include <array>
-
-struct Position{
-   double x;
-   double y;
-   double z;
-};
-
-struct Quaternion{
-   double x;
-   double y;
-   double z;
-   double w;
-};
-
-struct Odometry_msg {
-   Position position;
-   Quaternion orientation;
-   double ranges[360];
-};
-
-struct Twist_msg {
-    Position linear;
-    Position angular;
-};
+#include "parsing.h"
 
 // forward declarations
 std::string read_msg(const std::string& file_path);
-bool parse_msg(std::string lidarMsg, std::string* parsedMsg);
+bool Parsing::parse_msg(std::string lidarMsg, std::string* parsedMsg);
 std::string isolate_string_inbetween_two_signals(std::string* parsedMsg, std::string startSignal, std::string endSignal);
-bool isolate_LIDAR_ranges(const std::string* parsedMsg, std::array<double, 360>* doubleArray);
-bool isolate_odometry_data(std::string* parsedMsg, Odometry_msg* odomMsg, Twist_msg* twistMsg);
+bool Parsing::isolate_LIDAR_ranges(std::string* parsedMsg, std::array<double, 360>* doubleArray);
+bool Parsing::isolate_odometry_data(std::string* parsedMsg, Messages::Odometry_msg* odomMsg, Messages::Twist_msg* twistMsg);
 
 
 std::string read_msg(const std::string& file_path) {
@@ -56,7 +33,7 @@ std::string read_msg(const std::string& file_path) {
     return fileContent;
 }
 
-bool parse_msg(std::string msg, std::string* parsedMsg){
+bool Parsing::parse_msg(std::string msg, std::string* parsedMsg){
     // Define start signal
     std::string startSignal = "---START---";
     std::string endSignal = "___END___";
@@ -107,7 +84,7 @@ std::string isolate_string_inbetween_two_signals(std::string* parsedMsg, std::st
     return parsedMsg->substr(startPosition + startSignal.length(), endPosition - (startPosition + startSignal.length()));
 }
 
-bool isolate_LIDAR_ranges(std::string* parsedMsg, std::array<double, 360>* doubleArray) {
+bool Parsing::isolate_LIDAR_ranges(std::string* parsedMsg, std::array<double, 360>* doubleArray){
     // Isolate string between two signals
     std::string strRanges = isolate_string_inbetween_two_signals(parsedMsg, "\"ranges\": [", "]");
     
@@ -136,37 +113,44 @@ bool isolate_LIDAR_ranges(std::string* parsedMsg, std::array<double, 360>* doubl
     return true;
 }
 
-bool isolate_odometry_data(std::string* parsedMsg, Odometry_msg* odomMsg, Twist_msg* twistMsg){
-    // Isolate the odometry's positions x, y, z, cast it to double, and store it in odomMsg
-    std::string odomPosePosition = isolate_string_inbetween_two_signals(parsedMsg, "\"position\": {","}");
-    odomMsg->position.x = std::stod(isolate_string_inbetween_two_signals(&odomPosePosition, "\"x\":", ","));
-    odomMsg->position.y = std::stod(isolate_string_inbetween_two_signals(&odomPosePosition, "\"y\":", ","));
-    odomMsg->position.z = std::stod(isolate_string_inbetween_two_signals(&odomPosePosition, "\"z\":", "\0"));
+bool Parsing::isolate_odometry_data(std::string* parsedMsg, Messages::Odometry_msg* odomMsg, Messages::Twist_msg* twistMsg){
+    try{
+        // Isolate the odometry's positions x, y, z, cast it to double, and store it in odomMsg
+        std::string odomPosePosition = isolate_string_inbetween_two_signals(parsedMsg, "\"position\": {","}");
+        odomMsg->position.x = std::stod(isolate_string_inbetween_two_signals(&odomPosePosition, "\"x\":", ","));
+        odomMsg->position.y = std::stod(isolate_string_inbetween_two_signals(&odomPosePosition, "\"y\":", ","));
+        odomMsg->position.z = std::stod(isolate_string_inbetween_two_signals(&odomPosePosition, "\"z\":", "\0"));
 
-    // Isolate the odometry's orientation x, y, z, w, cast it to double, and store it in odomMsg
-    std::string odomPoseOrientation = isolate_string_inbetween_two_signals(parsedMsg, "\"orientation\": {","}");
-    odomMsg->orientation.x = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"x\": ", ","));
-    odomMsg->orientation.y = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"y\": ", ","));
-    odomMsg->orientation.z = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"z\": ", ","));
-    odomMsg->orientation.w = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"w\": ", "\0"));
+        // Isolate the odometry's orientation x, y, z, w, cast it to double, and store it in odomMsg
+        std::string odomPoseOrientation = isolate_string_inbetween_two_signals(parsedMsg, "\"orientation\": {","}");
+        odomMsg->orientation.x = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"x\": ", ","));
+        odomMsg->orientation.y = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"y\": ", ","));
+        odomMsg->orientation.z = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"z\": ", ","));
+        odomMsg->orientation.w = std::stod(isolate_string_inbetween_two_signals(&odomPoseOrientation, "\"w\": ", "\0"));
 
-    // Isolate the linear twist x, y, z, cast it to double, and store it in twistMsg
-    std::string odomTwist = isolate_string_inbetween_two_signals(parsedMsg, "\"linear\": {","}");
-    twistMsg->linear.x = std::stod(isolate_string_inbetween_two_signals(&odomTwist, "\"x\": ", ","));
-    twistMsg->linear.y = std::stod(isolate_string_inbetween_two_signals(&odomTwist, "\"y\": ", ","));
-    twistMsg->linear.z = std::stod(isolate_string_inbetween_two_signals(&odomTwist, "\"z\": ", "\0"));
+        /*
+        // Isolate the linear twist x, y, z, cast it to double, and store it in twistMsg
+        std::string odomTwist = isolate_string_inbetween_two_signals(parsedMsg, "\"linear\": {","}");
+        twistMsg->linear.x = std::stod(isolate_string_inbetween_two_signals(&odomTwist, "\"x\": ", ","));
+        twistMsg->linear.y = std::stod(isolate_string_inbetween_two_signals(&odomTwist, "\"y\": ", ","));
+        twistMsg->linear.z = std::stod(isolate_string_inbetween_two_signals(&odomTwist, "\"z\": ", "\0"));
 
-    // Isolate the angular twist x, y, z, cast it to double, and store it in twistMsg
-    std::string odomAngularTwist = isolate_string_inbetween_two_signals(parsedMsg, "\"angular\": {","}");
-    twistMsg->angular.x = std::stod(isolate_string_inbetween_two_signals(&odomAngularTwist, "\"x\": ", ","));
-    twistMsg->angular.y = std::stod(isolate_string_inbetween_two_signals(&odomAngularTwist, "\"y\": ", ","));
-    twistMsg->angular.z = std::stod(isolate_string_inbetween_two_signals(&odomAngularTwist, "\"z\": ", "\0"));
-
+        // Isolate the angular twist x, y, z, cast it to double, and store it in twistMsg
+        std::string odomAngularTwist = isolate_string_inbetween_two_signals(parsedMsg, "\"angular\": {","}");
+        twistMsg->angular.x = std::stod(isolate_string_inbetween_two_signals(&odomAngularTwist, "\"x\": ", ","));
+        twistMsg->angular.y = std::stod(isolate_string_inbetween_two_signals(&odomAngularTwist, "\"y\": ", ","));
+        twistMsg->angular.z = std::stod(isolate_string_inbetween_two_signals(&odomAngularTwist, "\"z\": ", "\0"));
+        */
+    } catch (const std::invalid_argument& e){
+        std::cerr << "Invalid argument: " << e.what() << std::endl;
+        return false;
+    }
     // Return true if all the data is casted successfully
     return true;
 }
 
-int main() {
+/*main for testing*/
+/*int main() {
     // Additonal return values to give them to functions as references (pointers)
     std::string* parsedOdomMsg = new std::string;
     Odometry_msg* odomMsg = new Odometry_msg;
@@ -184,7 +168,7 @@ int main() {
     storingSuccess = isolate_odometry_data(parsedOdomMsg, odomMsg, twistMsg);
 
     // Check stored data
-    std::cout << *parsedOdomMsg << std::endl;
+    std::cout << *parsedOdomMsg << "\n" << std::endl;
     std::cout << "Pose Positions (x,y,z) = (" << odomMsg->position.x << "," << odomMsg->position.y << "," << odomMsg->position.z << ")" << std::endl;
     std::cout << "Pose Orientation (x,y,z,w) = (" << odomMsg->orientation.x << "," << odomMsg->orientation.y << "," << odomMsg->orientation.z << odomMsg->orientation.w <<")" <<std::endl;
     std::cout << "Linear Twist (x,y,z) = (" << twistMsg->linear.x << "," << twistMsg->linear.y << "," << twistMsg->linear.z << ")" <<std::endl;
@@ -195,7 +179,7 @@ int main() {
     delete odomMsg;
     delete twistMsg;
 
-    /*// Additonal return values to give them to functions as references (pointers)
+    // Additonal return values to give them to functions as references (pointers)
     std::string* parsedMsg = new std::string;
     std::array<double,360> doubleArray;
 
@@ -216,7 +200,7 @@ int main() {
     }
     
     //Free memory for avoiding memory leaks!!
-    delete parsedMsg;*/
+    delete parsedMsg;
 
     return 0;
-}
+}*/
