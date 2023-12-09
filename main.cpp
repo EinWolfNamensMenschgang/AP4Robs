@@ -25,6 +25,8 @@
 #include "Publisher.h"
 #include "Functions.h"
 #include "messages.h"
+#include "parsing.h"
+
 #define SCAN_RCVBUFSIZE 9000   /* Size of receive buffer */
 #define ODOM_RCVBUFSIZE 1000   /* Size of receive buffer */
 #define ODOM_PORT 9998 //9997 for /scan, 9998 for /odom
@@ -179,9 +181,10 @@ int main()
    }  // end semget failed
 
 //------------------TODO: Insert Waypoint Array Creation ---------------------------
-int numberOfWaypoints;
+int numberOfWaypoints = 10;
 int waypointIndex = 0;
 Messages::Odometry_msg waypoints[numberOfWaypoints];
+
 //----------------------------------------------------------------------------------
 
    /* fork a child process */
@@ -245,16 +248,15 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
 
       lc_msg = Functions::linearController(k_alpha, k_beta, k_rho, goal.position.x, goal.position.y, goalYaw, assumedX, assumedY, assumedYAW);    
 
-//--------------------TODO: Convert Twist Message to std::string ------------------------------------------------
 Messages::Twist_msg cmd_vel = lc_msg.twist;
-std::string twist_string;
-//---------------------------------------------------------------------------------------------------------------
+std::string twist_string = "---START---{\"linear\": " + std::to_string(cmd_vel.x_vel)+ ", \"angular\": " + std::to_string(cmd_vel.angular_vel) + "}___END___";
 
 
 if(lc_msg.distance < 0.05){
    waypointIndex++;
-}else if(waypointIndex == numberOfWaypoints){
-// Publish 0 Velocity
+}else if(waypointIndex == numberOfWaypoints){ 
+Publisher::publish("---START---{\"linear\": 0.0, \"angular\": 0.0}___END___");
+
 }else{
 Publisher::publish(twist_string);
 }
@@ -281,15 +283,34 @@ Publisher::publish(twist_string);
       {
         std::vector<char> odom_msg;
         std::vector<char> laser_msg;
-        std::thread OdomSub(Subscriber::subscribe, SCAN_PORT, SCAN_RCVBUFSIZE, std::ref(odom_msg));
-        std::thread LaserSub(Subscriber::subscribe, ODOM_PORT, ODOM_RCVBUFSIZE, std::ref(laser_msg));
+        bool odomSuccess = false;
+        bool laserSuccess = false;
+        bool castSuccess = false;
+        Messages::Sensor_msg msg;
+        Messages::Odometry_msg* odomPointer = &msg.odom;
+        std::array<double, 360>* laserPointer = &msg.laser.ranges;
+        while(!castSuccess){
+        std::thread OdomSub(Subscriber::subscribe, ODOM_PORT, ODOM_RCVBUFSIZE, std::ref(odom_msg));
+        std::thread LaserSub(Subscriber::subscribe, SCAN_PORT, SCAN_RCVBUFSIZE, std::ref(laser_msg));
         OdomSub.join(); //wait for OdomSub to finish
         LaserSub.join(); //wait for LaserSub to finish
-
-      //---------TODO: Insert Odometry_msg parse(odom_msg)-----------------
-      //---------TODO: Insert Laserscan_msg parse(laser_msg)---------------
-
-         Messages::Sensor_msg msg;
+        std::string odomStringData(odom_msg.begin(), odom_msg.end());
+        std::cout << "odomStringData: " << odomStringData << std::endl;
+        std::string laserStringData(laser_msg.begin(), laser_msg.end());
+        std::cout << "laserStringData: " << laserStringData << std::endl;
+         std::string* odomString = new std::string;
+         std::string* laserString = new std::string;
+         Parsing::parse_msg(odomStringData, odomString);
+         Parsing::parse_msg(laserStringData, laserString);
+         odomSuccess = Parsing::isolate_odometry_data(odomString, odomPointer);
+         laserSuccess = Parsing::isolate_LIDAR_ranges(laserString, laserPointer);
+         castSuccess = odomSuccess && laserSuccess;
+         //std::cout << "Laser: " << laserSuccess << std::endl;
+         //std::cout << "Odom : " << odomSuccess << std::endl;
+         delete odomString;
+         delete laserString;
+        }
+         
          waitSem(empty);
          waitSem(mutex);
          int in = shmptr->in;

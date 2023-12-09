@@ -7,11 +7,11 @@
 #include "parsing.h"
 
 // forward declarations
-std::string read_msg(const std::string& file_path);
+/*std::string read_msg(const std::string& file_path);
 bool Parsing::parse_msg(std::string lidarMsg, std::string* parsedMsg);
 std::string isolate_string_inbetween_two_signals(std::string* parsedMsg, std::string startSignal, std::string endSignal);
 bool Parsing::isolate_LIDAR_ranges(std::string* parsedMsg, std::array<double, 360>* doubleArray);
-bool Parsing::isolate_odometry_data(std::string* parsedMsg, Messages::Odometry_msg* odomMsg, Messages::Twist_msg* twistMsg);
+bool Parsing::isolate_odometry_data(std::string* parsedMsg, Messages::Odometry_msg* odomMsg, Messages::Twist_msg* twistMsg);*/
 
 
 std::string read_msg(const std::string& file_path) {
@@ -113,7 +113,7 @@ bool Parsing::isolate_LIDAR_ranges(std::string* parsedMsg, std::array<double, 36
     return true;
 }
 
-bool Parsing::isolate_odometry_data(std::string* parsedMsg, Messages::Odometry_msg* odomMsg, Messages::Twist_msg* twistMsg){
+bool Parsing::isolate_odometry_data(std::string* parsedMsg, Messages::Odometry_msg* odomMsg){
     try{
         // Isolate the odometry's positions x, y, z, cast it to double, and store it in odomMsg
         std::string odomPosePosition = isolate_string_inbetween_two_signals(parsedMsg, "\"position\": {","}");

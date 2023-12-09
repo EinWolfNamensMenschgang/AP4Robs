@@ -32,7 +32,7 @@ int sock;                        /* Socket descriptor */
     int bytesRcvd, totalBytesRcvd;   /* Bytes read in single recv() 
                                         and total bytes read */
 
-    servIP = "192.168.100.54";             /* First arg: server IP address (dotted quad) */
+    servIP = "192.168.100.50";             /* First arg: server IP address (dotted quad) */
     //echoString = "";         /* Second arg: string to echo */
 
     echoServPort = port; /* Use given port, if any */
@@ -78,7 +78,7 @@ int sock;                        /* Socket descriptor */
         //printf("%s", echoBuffer);      /* Print the echo buffer */
      } 
     finalMessage.push_back('\0');
-    for (char i: finalMessage)
+    /*for (char i: finalMessage)
         std::cout << i;
     printf("\n");    /* Print a final linefeed */
 

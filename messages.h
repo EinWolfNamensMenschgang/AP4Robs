@@ -1,5 +1,7 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
+#include <array>
+
 namespace Messages{
 struct Position{
    double x;
@@ -21,7 +23,7 @@ struct Odometry_msg {
 };
 
 struct Laserscan_msg {
-   double ranges[360];
+   std::array<double, 360> ranges;
 };
 
 struct Sensor_msg {
