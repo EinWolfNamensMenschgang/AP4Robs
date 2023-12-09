@@ -14,14 +14,14 @@
 #define ODOM_PORT 9998 //9997 for /scan, 9998 for /odom
 #define SCAN_PORT 9997
 
-void DieWithError(const char *errorMessage)
+void Subscriber::DieWithError(const char *errorMessage)
 {
     perror(errorMessage);
     exit(1);
 }
 
-namespace Subscriber{
-void subscribe(int port, int messageSize, std::vector<char>& returnString){ //SERVERPORT, message size is expected number of chars in one Message
+
+void Subscriber::subscribe(int port, int messageSize, std::vector<char>& returnString){ //SERVERPORT, message size is expected number of chars in one Message
 int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort;     /* Echo server port */
@@ -86,7 +86,7 @@ int sock;                        /* Socket descriptor */
     returnString = finalMessage;
     return;
 }
-}
+
 /*int main(){
     std::vector<char> final_msg = subscribe(SERVERPORT, RCVBUFSIZE);
     return 0;

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MESSAGES_H
+#define MESSAGES_H
 namespace Messages{
 struct Position{
    double x;
@@ -38,3 +39,4 @@ struct Twist_msg_and_distance{
     double distance;
 };
 }
+#endif

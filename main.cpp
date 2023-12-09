@@ -20,6 +20,7 @@
 #include <sys/sem.h>
 #include <iostream>
 #include <thread>
+#include <pthread.h>
 #include "Subscriber.h"
 #include "Publisher.h"
 #include "Functions.h"

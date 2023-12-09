@@ -10,19 +10,20 @@
 #include <iostream>
 #include <string>
 #include "Publisher.h"
+#include "Subscriber.h"
 
 #define RCVBUFSIZE 9000   /* Size of receive buffer */
 #define SERVERPORT 9999 //9999 for /cmd_vel
 
-void DieWithError(const char *errorMessage)
+/*void Subscriber::DieWithError(const char *errorMessage)
 {
     perror(errorMessage);
     exit(1);
-}
+}*/
 
 std::string testString = "---START---{\"linear\": 0.0, \"angular\": 0.0}___END___";
-namespace Publisher{
-void publish(std::string twist_msg){ 
+
+void Publisher::publish(std::string twist_msg){ 
 int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort;     /* Echo server port */
@@ -41,7 +42,7 @@ int sock;                        /* Socket descriptor */
 
     /* Create a reliable, stream socket using TCP */
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-        DieWithError("socket() failed");
+        Subscriber::DieWithError("socket() failed");
 
     /* Construct the server address structure */
     memset(&echoServAddr, 0, sizeof(echoServAddr));     /* Zero out structure */
@@ -51,16 +52,16 @@ int sock;                        /* Socket descriptor */
 
     /* Establish the connection to the echo server */
     if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
-        DieWithError("connect() failed");
+        Subscriber::DieWithError("connect() failed");
 
     echoStringLen = strlen(echoString);          /* Determine input length */
 
     /* Send the string to the server */
     if (send(sock, echoString, echoStringLen, 0) != echoStringLen)
-        DieWithError("send() sent a different number of bytes than expected");
+        Subscriber::DieWithError("send() sent a different number of bytes than expected");
     close(sock);
 }
-}
+
 
 /*int main(){
     publish(testString);
