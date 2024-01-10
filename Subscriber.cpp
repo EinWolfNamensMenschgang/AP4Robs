@@ -32,7 +32,7 @@ int sock;                        /* Socket descriptor */
     int bytesRcvd, totalBytesRcvd;   /* Bytes read in single recv() 
                                         and total bytes read */
 
-    servIP = "192.168.100.50";             /* First arg: server IP address (dotted quad) */
+    servIP = "192.168.100.51";             /* First arg: server IP address (dotted quad) */
     //echoString = "";         /* Second arg: string to echo */
 
     echoServPort = port; /* Use given port, if any */

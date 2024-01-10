@@ -21,7 +21,7 @@
     exit(1);
 }*/
 
-std::string testString = "---START---{\"linear\": 0.0, \"angular\": 0.0}___END___";
+//std::string testString = "---START---{\"linear\": 0.0, \"angular\": 0.0}___END___";
 
 void Publisher::publish(std::string twist_msg){ 
 int sock;                        /* Socket descriptor */
@@ -34,7 +34,7 @@ int sock;                        /* Socket descriptor */
     int bytesRcvd, totalBytesRcvd;   /* Bytes read in single recv() 
                                         and total bytes read */
 
-    servIP = "192.168.100.50";             /* First arg: server IP address (dotted quad) */
+    servIP = "192.168.100.51";             /* First arg: server IP address (dotted quad) */
     echoString = twist_msg.c_str();         /* Second arg: string to echo */
 
     echoServPort = SERVERPORT; /* Use given port, if any */

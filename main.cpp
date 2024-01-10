@@ -181,9 +181,46 @@ int main()
    }  // end semget failed
 
 //------------------TODO: Insert Waypoint Array Creation ---------------------------
-int numberOfWaypoints = 10;
+int numberOfWaypoints = 6;
 int waypointIndex = 0;
 Messages::Odometry_msg waypoints[numberOfWaypoints];
+waypoints[0].position.x=0.3;
+waypoints[0].position.y=0;
+waypoints[0].orientation.x = 0;
+waypoints[0].orientation.y = 0;
+waypoints[0].orientation.z = 0;
+waypoints[0].orientation.w = 1;
+waypoints[1].position.x=0.5;
+waypoints[1].position.y=-0.2;
+waypoints[1].orientation.x = 0;
+waypoints[1].orientation.y = 0;
+waypoints[1].orientation.z = 0;
+waypoints[1].orientation.w = 1;
+waypoints[2].position.x=0.7;
+waypoints[2].position.y=0;
+waypoints[2].orientation.x = 0;
+waypoints[2].orientation.y = 0;
+waypoints[2].orientation.z = 0.7071068;
+waypoints[2].orientation.w = 0.7071068;
+waypoints[3].position.x=0.5;
+waypoints[3].position.y=0.2;
+waypoints[3].orientation.x = 0;
+waypoints[3].orientation.y = 0;
+waypoints[3].orientation.z = 1;
+waypoints[3].orientation.w = 0;
+waypoints[4].position.x=0.3;
+waypoints[4].position.y=0;
+waypoints[4].orientation.x = 0;
+waypoints[4].orientation.y = 0;
+waypoints[4].orientation.z = 1;
+waypoints[4].orientation.w = 0;
+waypoints[5].position.x=0;
+waypoints[5].position.y=0;
+waypoints[5].orientation.x = 0;
+waypoints[5].orientation.y = 0;
+waypoints[5].orientation.z = 1;
+waypoints[5].orientation.w = 0;
+
 
 //----------------------------------------------------------------------------------
 
@@ -223,8 +260,8 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
          shmptr->out = (shmptr->out + 1) % BUFFER_SIZE;
          signalSem(mutex); 
          signalSem(empty);
-         std::cout << "Consumer read: x: " << nextConsumed.odom.position.x << " y: " << nextConsumed.odom.position.y << " ranges: "<< nextConsumed.laser.ranges[0]
-              << " at index " << out << std::endl;
+         //std::cout << "Consumer read: x: " << nextConsumed.odom.position.x << " y: " << nextConsumed.odom.position.y << " ranges: "<< nextConsumed.laser.ranges[0]
+         //     << " at index " << out << std::endl;
          sleep(0.1);
 
 //------------TODO: Insert Calculate Position From Laser Readings---------------
@@ -243,16 +280,20 @@ Messages::Odometry_msg waypoints[numberOfWaypoints];
       Messages::Odometry_msg goal = waypoints[waypointIndex];
       double goalYaw = Functions::getYawFromQuats(goal.orientation);
       double k_alpha = 0.6;
-      double k_rho = 0.2;
+      double k_rho = 0.3;
       double k_beta = -0.2;
-
+      std::cout << "OdomX : " << assumedX << " OdomY : " << assumedY << std::endl;
+      std::cout << "GoalX : " << goal.position.x << " GoalY : " << goal.position.y << std::endl;
+      std::cout << "OdomYaw: " << Functions::rad2deg(odomYAW) << std::endl;
+      std::cout << "GoalYaw: " << Functions::rad2deg(goalYaw) << std::endl;
+      
       lc_msg = Functions::linearController(k_alpha, k_beta, k_rho, goal.position.x, goal.position.y, goalYaw, assumedX, assumedY, assumedYAW);    
 
 Messages::Twist_msg cmd_vel = lc_msg.twist;
 std::string twist_string = "---START---{\"linear\": " + std::to_string(cmd_vel.x_vel)+ ", \"angular\": " + std::to_string(cmd_vel.angular_vel) + "}___END___";
 
 
-if(lc_msg.distance < 0.05){
+if(lc_msg.distance < 0.03){
    waypointIndex++;
 }else if(waypointIndex == numberOfWaypoints){ 
 Publisher::publish("---START---{\"linear\": 0.0, \"angular\": 0.0}___END___");
@@ -319,7 +360,7 @@ Publisher::publish(twist_string);
          shmptr->numItems++;
          signalSem(mutex);
          signalSem(full);
-         std::cout << "Producer wrote: x:" << msg.odom.position.x << " y: "<< msg.odom.position.y << " range: " << msg.laser.ranges[0] << std::endl;
+         //std::cout << "Producer wrote: x:" << msg.odom.position.x << " y: "<< msg.odom.position.y << " range: " << msg.laser.ranges[0] << std::endl;
          sleep(0.1); 
       }  // end producing loop
    }  // end producer code
