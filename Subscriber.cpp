@@ -8,16 +8,20 @@
 #include <stdlib.h> /* for exit() */
 #include <vector>
 #include <iostream>
-#define RCVBUFSIZE 9000   /* Size of receive buffer */
-#define SERVERPORT 9998 //9997 for /scan, 9998 for /odom
-void DieWithError(const char *errorMessage)
+#include "Subscriber.h"
+#include "messages.h"
+#define SCAN_RCVBUFSIZE 9000   /* Size of receive buffer */
+#define ODOM_PORT 9998 //9997 for /scan, 9998 for /odom
+#define SCAN_PORT 9997
+
+void Subscriber::DieWithError(const char *errorMessage)
 {
     perror(errorMessage);
     exit(1);
 }
 
 
-std::vector<char> subscribe(int port, int messageSize){ //SERVERPORT, message size is expected number of chars in one Message
+void Subscriber::subscribe(int port, int messageSize, std::vector<char>& returnString){ //SERVERPORT, message size is expected number of chars in one Message
 int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     unsigned short echoServPort;     /* Echo server port */
@@ -28,7 +32,7 @@ int sock;                        /* Socket descriptor */
     int bytesRcvd, totalBytesRcvd;   /* Bytes read in single recv() 
                                         and total bytes read */
 
-    servIP = "192.168.100.54";             /* First arg: server IP address (dotted quad) */
+    servIP = "192.168.100.51";             /* First arg: server IP address (dotted quad) */
     //echoString = "";         /* Second arg: string to echo */
 
     echoServPort = port; /* Use given port, if any */
@@ -74,15 +78,16 @@ int sock;                        /* Socket descriptor */
         //printf("%s", echoBuffer);      /* Print the echo buffer */
      } 
     finalMessage.push_back('\0');
-    for (char i: finalMessage)
+    /*for (char i: finalMessage)
         std::cout << i;
     printf("\n");    /* Print a final linefeed */
 
     close(sock);
-    return finalMessage;
+    returnString = finalMessage;
+    return;
 }
 
-int main(){
+/*int main(){
     std::vector<char> final_msg = subscribe(SERVERPORT, RCVBUFSIZE);
     return 0;
-}
+}*/
